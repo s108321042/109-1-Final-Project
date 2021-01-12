@@ -6,7 +6,7 @@ module LD_final_project(output reg [7:0] DATA_R, DATA_G, DATA_B,
 								output reg [2:0] COMM, Life,
 								output reg [1:0] COMM_CLK,
 								output EN,
-								input CLK, clear, Left, Right);
+								input CLK, clear, Left, Right,mode);
 	reg [7:0] plate [7:0];
 	reg [7:0] people [7:0];
 	reg [6:0] seg1, seg2;
@@ -17,7 +17,7 @@ module LD_final_project(output reg [7:0] DATA_R, DATA_G, DATA_B,
 	segment7 S1(bcd_m, A1,B1,C1,D1,E1,F1,G1);
 	divfreq div0(CLK, CLK_div);
 	divfreq1 div1(CLK, CLK_time);
-	divfreq2 div2(CLK, CLK_mv);
+	divfreq2 div2(CLK,mode, CLK_mv);
 	byte line, count, count1;
 	integer a, b, c, touch;
 
@@ -147,6 +147,7 @@ always@(posedge CLK_div)
 			begin
 				DATA_R <= plate[count];
 				DATA_G <= 8'b11111111;
+				//DATA_B <=8'b00000000
 				Life <= 3'b000;
 			end
 	end
@@ -168,6 +169,7 @@ always@(posedge CLK_mv)
 					a = 0;
 					b = 0;
 					c = 0;
+					////DATA_B <=8'b11111111
 					random01 = (5*random01 + 3)%16;
 					r = random01 % 8;
 					random02 = (5*(random02+1) + 3)%16;
@@ -185,11 +187,11 @@ always@(posedge CLK_mv)
 					people[0] = 8'b11111111;
 					people[1] = 8'b11111111;
 					people[2] = 8'b11111111;
-					people[3] = 8'b00111111;
+					people[3] = 8'b0111111;
 					people[4] = 8'b11111111;
 					people[5] = 8'b11111111;
 					people[6] = 8'b11111111;
-					people[7] = 8'b11111111;
+					people[7] = 8'b111111111;
 					
 				end
 ////////////////////////////////////////
@@ -216,6 +218,8 @@ always@(posedge CLK_mv)
 					end
 /////////////////////////////////////////	
 			//fall object 2
+			if(a>=7)
+			begin
 				if(b == 0)
 					begin
 						plate[r1][b] = 1'b0;
@@ -234,8 +238,11 @@ always@(posedge CLK_mv)
 						r1 = random02 % 8;
 						b = 0;
 					end
+					end
 /////////////////////////////////////////		
 			//fall object 3
+			if(a<=4)
+			begin
 				if(c == 0)
 					begin
 						plate[r2][c] = 1'b0;
@@ -254,6 +261,7 @@ always@(posedge CLK_mv)
 						r2 = random03 % 8;
 						c = 0;
 					end
+			end
 /////////////////////////////////////////	
 			//people move		
 				if((right == 1) && (line != 7))
@@ -316,6 +324,7 @@ always@(posedge CLK_mv)
 	////////////////if///////////////		
 				 if(bcd_m==2) 
 				 begin
+					
 				plate[0] = 8'b01110111;
 				plate[1] = 8'b01101011;
 				plate[2] = 8'b01011101;
@@ -383,15 +392,17 @@ module divfreq1(input CLK, output reg CLK_time);
 endmodule 
 
 //掉落物&人物移動除頻器
-module divfreq2(input CLK, output reg CLK_mv);
+module divfreq2(input CLK,mode, output reg CLK_mv);
   reg [35:0] Count;
   initial
     begin
       CLK_mv = 0;
 	 end	
-		
   always @(posedge CLK)
-    begin
+  
+  if(mode)
+  begin
+  
       if(Count > 4500000)
         begin
           Count <= 45'b0;
@@ -399,7 +410,20 @@ module divfreq2(input CLK, output reg CLK_mv);
         end
       else
         Count <= Count + 1'b1;
-    end
+end
+else
+begin
+if(Count > 1500000)
+        begin
+          Count <= 15'b0;
+          CLK_mv <= ~CLK_mv;
+        end
+      else
+        Count <= Count + 1'b1;
+
+end
+
+
 endmodule 
 ```
 ## 這是pin角
@@ -448,4 +472,5 @@ d7_1[6]	Location	PIN_120
 d7_1[0]	Location	PIN_111
 COMM_CLK[1]	Location	PIN_106
 COMM_CLK[0]	Location	PIN_110
+mode Location PIN_83 
 ```
